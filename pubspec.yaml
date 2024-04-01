@@ -23,6 +23,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   shaders:
+    - shaders/progressive_blur.frag
     - shaders/progressive_blur_x.frag
     - shaders/progressive_blur_y.frag
 

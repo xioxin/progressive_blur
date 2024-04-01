@@ -1,4 +1,4 @@
-import 'dart:ui' show Image;
+import 'dart:ui' show Image, FragmentProgram;
 import 'package:flutter/widgets.dart' hide Image;
 import 'package:flutter_shaders/flutter_shaders.dart';
 
@@ -10,6 +10,8 @@ enum ProgressiveDirection {
 }
 
 class ProgressiveBlur extends StatelessWidget {
+  static Future<FragmentProgram>? program;
+
   final Widget child;
   final double offset;
   final double interpolation;
@@ -103,45 +105,75 @@ class ProgressiveBlur extends StatelessWidget {
     }
   }
 
+  static Future<FragmentProgram> getProgram() {
+    program ??= FragmentProgram.fromAsset(
+            'packages/progressive_blur/shaders/progressive_blur_x.frag')
+        .catchError((Object error, StackTrace stackTrace) {
+      FlutterError.reportError(
+          FlutterErrorDetails(exception: error, stack: stackTrace));
+    });
+    return program!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final directionValue =
         ProgressiveDirection.values.indexOf(direction).toDouble();
 
-    return ShaderBuilder((BuildContext context, FragmentShader shaderX, _) {
-      return ShaderBuilder((BuildContext context, FragmentShader shaderY, _) {
-        return AnimatedSampler(
-          (Image image, Size size, Canvas canvas) {
-            shaderX.setFloatUniforms((uniforms) {
-              uniforms
-                ..setSize(size)
-                ..setFloat(sigmaX)
-                ..setFloat(offsetProportion(offset, size))
-                ..setFloat(interpolation)
-                ..setFloat(directionValue)
-                ..setFloat(displayScale);
-            });
-            shaderX.setImageSampler(0, image);
-            draw(image, size, canvas, shaderX);
-          },
-          child: AnimatedSampler(
-            (Image image, Size size, Canvas canvas) {
-              shaderY.setFloatUniforms((uniforms) {
-                uniforms
-                  ..setSize(size)
-                  ..setFloat(sigmaY)
-                  ..setFloat(offsetProportion(offset, size))
-                  ..setFloat(interpolation)
-                  ..setFloat(directionValue)
-                  ..setFloat(displayScale);
-              });
-              shaderY.setImageSampler(0, image);
-              draw(image, size, canvas, shaderY);
-            },
-            child: child,
-          ),
-        );
-      }, assetKey: 'packages/progressive_blur/shaders/progressive_blur_y.frag');
-    }, assetKey: 'packages/progressive_blur/shaders/progressive_blur_x.frag');
+    //
+    // return ShaderBuilder((BuildContext context, FragmentShader shaderX, _) {
+    //   return ShaderBuilder((BuildContext context, FragmentShader shaderY, _) {
+    //     return AnimatedSampler(
+    //           (Image image, Size size, Canvas canvas) {
+    //         shaderX.setFloatUniforms((uniforms) {
+    //           uniforms
+    //             ..setSize(size)
+    //             ..setFloat(sigmaX)
+    //             ..setFloat(offsetProportion(offset, size))
+    //             ..setFloat(interpolation)
+    //             ..setFloat(directionValue)
+    //             ..setFloat(displayScale);
+    //         });
+    //         shaderX.setImageSampler(0, image);
+    //         draw(image, size, canvas, shaderX);
+    //       },
+    //       child: AnimatedSampler(
+    //             (Image image, Size size, Canvas canvas) {
+    //           shaderY.setFloatUniforms((uniforms) {
+    //             uniforms
+    //               ..setSize(size)
+    //               ..setFloat(sigmaY)
+    //               ..setFloat(offsetProportion(offset, size))
+    //               ..setFloat(interpolation)
+    //               ..setFloat(directionValue)
+    //               ..setFloat(displayScale);
+    //           });
+    //           shaderY.setImageSampler(0, image);
+    //           draw(image, size, canvas, shaderY);
+    //         },
+    //         child: child,
+    //       ),
+    //     );
+    //   }, assetKey: 'packages/progressive_blur/shaders/progressive_blur_y.frag');
+    // }, assetKey: 'packages/progressive_blur/shaders/progressive_blur_x.frag');
+
+    return ShaderBuilder((BuildContext context, FragmentShader shader, _) {
+      return AnimatedSampler(
+        (Image image, Size size, Canvas canvas) {
+          shader.setFloatUniforms((uniforms) {
+            uniforms
+              ..setSize(size)
+              ..setSize(Size(sigmaX, sigmaY))
+              ..setFloat(offsetProportion(offset, size))
+              ..setFloat(interpolation)
+              ..setFloat(directionValue)
+              ..setFloat(displayScale);
+          });
+          shader.setImageSampler(0, image);
+          draw(image, size, canvas, shader);
+        },
+        child: child,
+      );
+    }, assetKey: 'packages/progressive_blur/shaders/progressive_blur.frag');
   }
 }
