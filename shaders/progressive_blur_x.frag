@@ -16,17 +16,15 @@ out vec4 fragColor;
 
 float mapRadius(vec2 position) {
     float mapped;
-
     if (direction == 0.0) {
         mapped = max((position.y/size.y*displayScale-(1-offset))/interpolation, 0.0);
     } else if (direction == 1.0) {
-        mapped = max(0.5-(position.y/size.y*displayScale-offset)/interpolation, 0.0);
+        mapped = max(0.0-(position.y/size.y*displayScale-offset)/interpolation, 0.0);
     } else if (direction == 2.0) {
-        mapped = max((position.x/size.x*displayScale-offset)/interpolation, 0.0);
+        mapped = max((position.x/size.x*displayScale-(1-offset))/interpolation, 0.0);
     } else if (direction == 3.0) {
-        mapped = max(0.5-(position.x/size.x*displayScale-offset)/interpolation, 0.0);
+        mapped = max(0.0-(position.x/size.x*displayScale-offset)/interpolation, 0.0);
     }
-
     return min(mapped*radius, radius);
 }
 
